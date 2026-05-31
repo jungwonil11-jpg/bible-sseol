@@ -1,0 +1,28 @@
+이 앱에 번들된 글꼴과 라이선스 고지
+====================================
+
+아래 글꼴들은 모두 SIL Open Font License 1.1(OFL)에 따라 배포되며,
+상업적 사용·앱 임베드·재배포가 허용됩니다(글꼴 자체의 유료 판매만 금지).
+OFL 전문은 함께 번들된 Nanum-OFL.txt / GamjaFlower-OFL.txt 에 있으며,
+모든 OFL 글꼴의 라이선스 본문은 동일합니다.
+
+- Gamja Flower
+  Copyright (c) YoonDesign Inc.
+  SIL Open Font License 1.1
+  출처: Google Fonts (ofl/gamjaflower)
+
+- 나눔명조 / 나눔고딕 (NanumMyeongjo, NanumGothic)
+  Copyright (c) 2010, NHN Corporation,
+  with Reserved Font Name Nanum, Naver Nanum.
+  SIL Open Font License 1.1
+  출처: Google Fonts (ofl/nanummyeongjo, ofl/nanumgothic)
+
+- 나눔스퀘어 (NanumSquare)
+  Copyright (c) NAVER Corporation, Nanum 글꼴 계열.
+  SIL Open Font License 1.1 (나눔글꼴과 동일 라이선스)
+  출처: NAVER 한글한글 아름답게 / fonts-archive
+
+- 마루 부리 (MaruBuri)
+  Copyright (c) NAVER Corp. and Naver Cultural Foundation.
+  SIL Open Font License 1.1 (나눔글꼴과 동일한 오픈 라이선스)
+  출처: NAVER 한글한글 아름답게 / fonts-archive

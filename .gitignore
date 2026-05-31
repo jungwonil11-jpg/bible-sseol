@@ -1,0 +1,34 @@
+# 본문(저작 콘텐츠) — 공개 repo엔 미포함
+/books.js
+/books_src/
+**/books.json
+
+# 문서 — README.md만 공개
+/CLAUDE.md
+/TODO.md
+/AGENTS.md
+/TONE_GUIDE_01_07.md
+
+# Claude 관련
+.claude/
+
+# 서명 비밀
+**/key.properties
+**/*.jks
+**/*.keystore
+
+# Flutter/Dart 빌드 산출물
+**/build/
+**/.dart_tool/
+**/.gradle/
+**/.idea/
+*.iml
+**/.flutter-plugins-dependencies
+**/ephemeral/
+__pycache__/
+*.pyc
+
+# OS
+Thumbs.db
+.DS_Store
+desktop.ini
