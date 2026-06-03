@@ -10,7 +10,7 @@ class AppDatabase {
   AppDatabase._(this._databaseFactory, this._databasePath);
 
   static const databaseName = 'bible_reader.db';
-  static const databaseVersion = 3;
+  static const databaseVersion = 4;
 
   final DatabaseFactory? _databaseFactory;
   final String? _databasePath;
@@ -75,6 +75,18 @@ class AppDatabase {
     if (oldVersion < 3) {
       await db.execute('ALTER TABLE highlights ADD COLUMN note TEXT');
     }
+    // v4: 즐겨찾기·하이라이트 수동 정렬 순서 추가. 기존 행은 현재 보이던 순서
+    // (최신순)를 그대로 유지하도록 음수 타임스탬프로 백필 → sort_order ASC = 최신순.
+    if (oldVersion < 4) {
+      await db.execute(
+        'ALTER TABLE chapter_favorites ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE highlights ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0',
+      );
+      await db.execute('UPDATE chapter_favorites SET sort_order = -created_at');
+      await db.execute('UPDATE highlights SET sort_order = -updated_at');
+    }
   }
 }
 
@@ -104,7 +116,8 @@ ON chapter_read_status(book_id)
 CREATE TABLE chapter_favorites (
   chapter_id TEXT PRIMARY KEY,
   book_id TEXT NOT NULL,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  sort_order INTEGER NOT NULL DEFAULT 0
 )
 ''',
   '''
@@ -121,6 +134,7 @@ CREATE TABLE highlights (
   end_offset INTEGER NOT NULL,
   color INTEGER NOT NULL DEFAULT 0,
   note TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 )

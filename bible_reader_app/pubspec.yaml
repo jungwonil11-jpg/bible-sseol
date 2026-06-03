@@ -39,6 +39,10 @@ dependencies:
   path_provider: ^2.1.5
   sqflite_common_ffi_web: ^1.1.1
   url_launcher: ^6.3.0
+  # 본문(books.json) AES-256 암호화/복호화. tool/encrypt_books.dart 와 공용.
+  encrypt: ^5.0.3
+  # 데스크탑 창 초기 크기·최소 크기·타이틀 제어(Windows/macOS/Linux).
+  window_manager: ^0.4.3
 
 dev_dependencies:
   flutter_test:
@@ -77,9 +81,11 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/books.json
+    # 본문은 암호화본만 번들(평문 books.json은 git/release 미포함).
+    - assets/books.json.enc
     - assets/licenses/
     - assets/splash.png
+    - assets/art/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

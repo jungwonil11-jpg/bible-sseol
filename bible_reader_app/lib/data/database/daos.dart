@@ -75,6 +75,12 @@ class ReadingProgressDao {
       whereArgs: [bookId],
     );
   }
+
+  /// 이어보기 기록 전부 삭제(앱 초기화용).
+  Future<void> clear() async {
+    final db = await _db.database;
+    await db.delete('reading_progress');
+  }
 }
 
 class ChapterReadStatus {
@@ -163,6 +169,12 @@ class ChapterReadStatusDao {
       whereArgs: [chapterId],
     );
   }
+
+  /// 읽음 표시 전부 삭제(앱 초기화용). 통계·스트릭도 여기서 계산되므로 같이 0이 된다.
+  Future<void> clear() async {
+    final db = await _db.database;
+    await db.delete('chapter_read_status');
+  }
 }
 
 class ChapterFavorite {
@@ -196,10 +208,16 @@ class ChapterFavoritesDao {
     int? createdAt,
   }) async {
     final db = await _db.database;
+    // 새 즐겨찾기는 맨 위로(현재 sort_order 최솟값 -1).
+    final min = await db.rawQuery(
+      'SELECT COALESCE(MIN(sort_order), 0) AS m FROM chapter_favorites',
+    );
+    final sortOrder = (min.first['m'] as int) - 1;
     await db.insert('chapter_favorites', {
       'chapter_id': chapterId,
       'book_id': bookId,
       'created_at': createdAt ?? nowMillis(),
+      'sort_order': sortOrder,
     }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
@@ -219,9 +237,24 @@ class ChapterFavoritesDao {
     final db = await _db.database;
     final rows = await db.query(
       'chapter_favorites',
-      orderBy: 'created_at DESC',
+      orderBy: 'sort_order ASC',
     );
     return rows.map(ChapterFavorite.fromMap).toList(growable: false);
+  }
+
+  /// 수동 정렬 순서 반영. orderedChapterIds 순서대로 sort_order를 0..n-1로 다시 매긴다.
+  Future<void> reorder(List<String> orderedChapterIds) async {
+    final db = await _db.database;
+    final batch = db.batch();
+    for (var i = 0; i < orderedChapterIds.length; i++) {
+      batch.update(
+        'chapter_favorites',
+        {'sort_order': i},
+        where: 'chapter_id = ?',
+        whereArgs: [orderedChapterIds[i]],
+      );
+    }
+    await batch.commit(noResult: true);
   }
 
   Future<void> remove(String chapterId) async {
@@ -231,6 +264,12 @@ class ChapterFavoritesDao {
       where: 'chapter_id = ?',
       whereArgs: [chapterId],
     );
+  }
+
+  /// 책갈피 전부 삭제(앱 초기화용).
+  Future<void> clear() async {
+    final db = await _db.database;
+    await db.delete('chapter_favorites');
   }
 }
 
@@ -288,6 +327,11 @@ class HighlightsDao {
   }) async {
     final db = await _db.database;
     final timestamp = createdAt ?? nowMillis();
+    // 새 하이라이트는 모아보기 맨 위로(현재 sort_order 최솟값 -1).
+    final min = await db.rawQuery(
+      'SELECT COALESCE(MIN(sort_order), 0) AS m FROM highlights',
+    );
+    final sortOrder = (min.first['m'] as int) - 1;
     return db.insert('highlights', {
       'chapter_id': chapterId,
       'block_index': blockIndex,
@@ -295,6 +339,7 @@ class HighlightsDao {
       'start_offset': startOffset,
       'end_offset': endOffset,
       'color': color,
+      'sort_order': sortOrder,
       'created_at': timestamp,
       'updated_at': timestamp,
     });
@@ -313,13 +358,34 @@ class HighlightsDao {
 
   Future<List<Highlight>> listAll() async {
     final db = await _db.database;
-    final rows = await db.query('highlights', orderBy: 'updated_at DESC');
+    final rows = await db.query('highlights', orderBy: 'sort_order ASC');
     return rows.map(Highlight.fromMap).toList(growable: false);
+  }
+
+  /// 수동 정렬 순서 반영. orderedIds 순서대로 sort_order를 0..n-1로 다시 매긴다.
+  Future<void> reorder(List<int> orderedIds) async {
+    final db = await _db.database;
+    final batch = db.batch();
+    for (var i = 0; i < orderedIds.length; i++) {
+      batch.update(
+        'highlights',
+        {'sort_order': i},
+        where: 'id = ?',
+        whereArgs: [orderedIds[i]],
+      );
+    }
+    await batch.commit(noResult: true);
   }
 
   Future<void> delete(int id) async {
     final db = await _db.database;
     await db.delete('highlights', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// 형광펜 전부 삭제(앱 초기화용).
+  Future<void> clear() async {
+    final db = await _db.database;
+    await db.delete('highlights');
   }
 }
 

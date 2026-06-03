@@ -2,6 +2,10 @@
 /books.js
 /books_src/
 **/books.json
+**/books.json.enc
+
+# 명화(이미지 자산) — 공개 repo엔 미포함 (PD지만 용량 때문에 zip/Release로만 배포)
+**/assets/art/
 
 # 문서 — README.md만 공개
 /CLAUDE.md
@@ -16,6 +20,9 @@
 **/key.properties
 **/*.jks
 **/*.keystore
+
+# 본문 암호화 AES 키 (★절대 공개 금지 — secret_key.example.dart 템플릿만 공개)
+**/secret_key.dart
 
 # Flutter/Dart 빌드 산출물
 **/build/

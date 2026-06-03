@@ -49,6 +49,21 @@ ReadingStats computeReadingStats(
   );
 }
 
+/// 읽음 표시된 모든 날짜(자정 기준) 집합. 출석 달력·총 읽은날 계산용.
+/// updatedAt이 편별 마지막 갱신 시각이라 과거 출석이 덮일 수 있으나(기존 한계),
+/// 현재 보유한 데이터로 만들 수 있는 최선의 출석 근사치다.
+Set<DateTime> readDays(List<ChapterReadStatus> status) {
+  final days = <DateTime>{};
+  for (final s in status) {
+    if (!s.isRead) {
+      continue;
+    }
+    final d = DateTime.fromMillisecondsSinceEpoch(s.updatedAt);
+    days.add(DateTime(d.year, d.month, d.day));
+  }
+  return days;
+}
+
 /// 읽음 표시한 날짜 기준 연속 일수. 오늘(또는 어제)부터 거꾸로 이어진 날 수.
 /// [now]를 주입하면 테스트에서 고정 날짜로 검증할 수 있다.
 int readingStreak(List<ChapterReadStatus> read, {DateTime? now}) {

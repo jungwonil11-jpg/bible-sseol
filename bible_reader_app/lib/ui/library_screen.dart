@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/database/daos.dart';
 import '../data/models/bible_data.dart';
 import '../providers/reading_providers.dart';
 import '../providers/settings_controller.dart';
 import '../theme/app_theme.dart';
+import 'attendance_calendar.dart';
 import 'book_detail_screen.dart';
 import 'global_app_bar_actions.dart';
 import 'reader_screen.dart';
-import 'stats_screen.dart';
+import 'stats_logic.dart';
 
 const canonKeys = ['protestant', 'catholic', 'orthodox'];
 
@@ -168,10 +170,8 @@ class LibraryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = appColors(context);
     final settings = ref.watch(settingsControllerProvider);
     final selectedCanon = settings.canon;
-    final canonInfo = data.canonInfo[selectedCanon]!;
     // 구약 + 제2경전을 한 묶음으로 합침. 천주교/정교회에선 제2경전이 별도
     // 등급이 아니라 구약의 일부이므로, sortOrder로 정렬해 구약 흐름에 끼워넣는다.
     // 개신교는 canon 필터로 제2경전이 자연히 빠져 구약 39권만 남는다.
@@ -180,29 +180,16 @@ class LibraryScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('성경 전체 썰 읽으실분'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bar_chart_outlined),
-            tooltip: '읽기 통계',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => StatsScreen(data: data)),
-            ),
-          ),
-          ...globalAppBarActions(context, ref, data),
-        ],
+        title: const Text('성경읽기'),
+        actions: globalAppBarActions(context, ref, data),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
-        children: [
-          Text(
-            '${canonInfo.name} ${canonInfo.total}권',
-            style: handTextStyle(
-              color: colors.ink,
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+      // 큰 화면에서 목록이 가로로 끝없이 늘어나지 않게 가운데 폭으로 모은다.
+      body: centerConstrained(
+        maxWidth: kLibraryMaxWidth,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
+          children: [
+            const _StreakButton(),
           const SizedBox(height: 22),
           _ContinueCard(data: data),
           _TestamentSection(
@@ -215,7 +202,8 @@ class LibraryScreen extends ConsumerWidget {
             sections: _groupBooks(newBooks, selectedCanon, 'new'),
             selectedCanon: selectedCanon,
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -234,6 +222,49 @@ class LibraryScreen extends ConsumerWidget {
             return byOrder != 0 ? byOrder : a.order.compareTo(b.order);
           });
     return books;
+  }
+}
+
+/// 메인 상단 '연속 N일째' 버튼. 누르면 출석 달력 바텀시트를 띄운다.
+class _StreakButton extends ConsumerWidget {
+  const _StreakButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = appColors(context);
+    final status = ref.watch(allReadStatusProvider).maybeWhen(
+          data: (s) => s,
+          orElse: () => const <ChapterReadStatus>[],
+        );
+    final streak = readingStreak(status.where((s) => s.isRead).toList());
+    return Material(
+      color: colors.paperEdge,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => showAttendanceSheet(context, status),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          child: Row(
+            children: [
+              Icon(Icons.local_fire_department, color: colors.accent, size: 24),
+              const SizedBox(width: 12),
+              Text(
+                streak > 0 ? '연속 $streak일째' : '읽기 출석 시작하기',
+                style: handTextStyle(
+                  color: colors.ink,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              Icon(Icons.calendar_month_outlined,
+                  color: colors.accentSoft, size: 20),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

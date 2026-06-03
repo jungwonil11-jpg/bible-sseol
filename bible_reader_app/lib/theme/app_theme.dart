@@ -146,9 +146,58 @@ ReadingTheme readingThemeById(String id) {
   return readingThemes.first;
 }
 
+/// 라이트(0.0) → 세피아(0.5) → 다크(1.0) 연속 톤. 테마를 슬라이더 한 줄로 고른다.
+/// 단순 보간은 세피아↔다크 중간에서 종이·글자가 같이 회색이 돼 본문이 안 읽히므로,
+/// 배경이 충분히 어두워지면 글자/강조색만 나이트(밝은 글자)로 갈아끼워 대비를 지킨다.
+AppColors toneColors(double tone) {
+  final t = tone.clamp(0.0, 1.0);
+  final light = readingThemes[0].colors;
+  final sepia = readingThemes[1].colors;
+  final night = readingThemes[2].colors;
+  final base = t <= 0.5
+      ? light.lerp(sepia, t / 0.5)
+      : sepia.lerp(night, (t - 0.5) / 0.5);
+  if (base.paper.computeLuminance() < _darkPaperThreshold) {
+    return base.copyWith(
+      ink: night.ink,
+      inkSoft: night.inkSoft,
+      accent: night.accent,
+      accentSoft: night.accentSoft,
+      onAccent: night.onAccent,
+    );
+  }
+  return base;
+}
+
+/// 톤이 다크 영역(어두운 종이)에 들어갔는지. 상태바 밝기·다크토글 판정에 쓴다.
+bool toneIsDark(double tone) =>
+    toneColors(tone).paper.computeLuminance() < _darkPaperThreshold;
+
+const _darkPaperThreshold = 0.42;
+
+/// 연속 톤(0~1)으로 앱 전체 테마를 만든다. main에서 themeTone을 받아 호출.
+ThemeData buildToneTheme({required double tone, String? fontFamily}) {
+  return _themeFromColors(
+    colors: toneColors(tone),
+    dark: toneIsDark(tone),
+    fontFamily: fontFamily,
+  );
+}
+
 ThemeData buildAppTheme({required ReadingTheme theme, String? fontFamily}) {
-  final colors = theme.colors;
-  final brightness = theme.dark ? Brightness.dark : Brightness.light;
+  return _themeFromColors(
+    colors: theme.colors,
+    dark: theme.dark,
+    fontFamily: fontFamily,
+  );
+}
+
+ThemeData _themeFromColors({
+  required AppColors colors,
+  required bool dark,
+  String? fontFamily,
+}) {
+  final brightness = dark ? Brightness.dark : Brightness.light;
   final base = ThemeData(
     brightness: brightness,
     // 앱 전체 기본 글씨체. null이면 시스템 폰트. 제목/본문/버튼/칩이 모두 이걸 따른다.
@@ -212,6 +261,21 @@ ThemeData buildAppTheme({required ReadingTheme theme, String? fontFamily}) {
 
 AppColors appColors(BuildContext context) {
   return Theme.of(context).extension<AppColors>()!;
+}
+
+/// 큰 화면(데스크탑·태블릿·폴드 펼침)에서 본문/목록이 가로로 끝없이 늘어나지
+/// 않도록 가운데에 모으는 최대 폭. 화면이 이보다 좁으면(폰) 그대로 꽉 채운다.
+const double kReaderMaxWidth = 720;
+const double kLibraryMaxWidth = 860;
+
+/// [child] 를 화면 가운데 [maxWidth] 안으로 제한해 감싼다. 좁은 화면에선 영향 없음.
+Widget centerConstrained({required double maxWidth, required Widget child}) {
+  return Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: child,
+    ),
+  );
 }
 
 /// 제목/헤더용 스타일. 글씨체는 ThemeData.fontFamily를 상속받도록 비워둔다.

@@ -39,7 +39,8 @@ class BookDetailScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(book.title),
+        // 헤더 공간이 좁아(전역 액션 버튼들) 책 제목은 표시하지 않는다.
+        // 책 제목은 아래 본문 헤더에 크게 나온다.
         actions: data == null ? null : globalAppBarActions(context, ref, data),
       ),
       body: ListView(

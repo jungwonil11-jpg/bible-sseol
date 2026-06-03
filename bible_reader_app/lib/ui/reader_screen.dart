@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/database/daos.dart';
 import '../data/models/bible_data.dart';
+import '../providers/artworks_providers.dart';
 import '../providers/books_providers.dart';
 import '../providers/database_providers.dart';
 import '../providers/reading_providers.dart';
 import '../providers/settings_controller.dart';
 import '../theme/app_theme.dart';
+import 'chapter_artwork.dart';
 import 'global_app_bar_actions.dart';
 import 'ornament.dart';
 
@@ -80,6 +82,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
         }
       }
       _restoreScroll(widget.initialScrollOffset);
+      _maybeMarkShortChapter();
     });
   }
 
@@ -107,6 +110,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       container.invalidate(lastReadProvider);
       container.invalidate(bookProgressProvider(widget.book.id));
       container.invalidate(bookReadStatusProvider(widget.book.id));
+      // 통계·출석 달력이 보는 전체 읽음 상태도 갱신(안 하면 stale).
+      container.invalidate(allReadStatusProvider);
     }
     _scrollController.dispose();
     super.dispose();
@@ -158,6 +163,19 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           isRead: true,
         );
     ref.invalidate(bookReadStatusProvider(widget.book.id));
+    // 통계·출석·메인 연속 버튼이 보는 전체 읽음 상태 즉시 갱신.
+    ref.invalidate(allReadStatusProvider);
+  }
+
+  /// 한 화면에 다 들어오는 짧은 편은 스크롤이 안 생겨 _onScroll이 못 잡는다.
+  /// 렌더 직후 더 스크롤할 게 없으면(=다 보이면) 읽음으로 처리한다.
+  void _maybeMarkShortChapter() {
+    if (_markedRead || !_scrollController.hasClients) {
+      return;
+    }
+    if (_scrollController.position.maxScrollExtent <= 0) {
+      _markRead();
+    }
   }
 
   void _openChapter(int index) {
@@ -170,6 +188,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
       if (_scrollController.hasClients) {
         _scrollController.jumpTo(0);
       }
+      _maybeMarkShortChapter();
     });
   }
 
@@ -238,6 +257,18 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final fontScale = ref.watch(
       settingsControllerProvider.select((s) => s.fontScale),
     );
+    final lineHeight = ref.watch(
+      settingsControllerProvider.select((s) => s.lineHeight),
+    );
+    final letterSpacing = ref.watch(
+      settingsControllerProvider.select((s) => s.letterSpacing),
+    );
+    final wordSpacing = ref.watch(
+      settingsControllerProvider.select((s) => s.wordSpacing),
+    );
+    final pageMargin = ref.watch(
+      settingsControllerProvider.select((s) => s.pageMargin),
+    );
     final chapter = _chapter;
     final isFirst = _chapterIndex == 0;
     final isLast = _chapterIndex == widget.book.chapters.length - 1;
@@ -245,6 +276,13 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     final data = ref
         .watch(bibleDataProvider)
         .maybeWhen(data: (d) => d, orElse: () => null);
+    // 이 편에 곁들일 명화(없으면 null → 표시 안 함).
+    final artwork = ref
+        .watch(artworkDataProvider)
+        .maybeWhen(
+          data: (d) => d.lookup(widget.book.id, chapter.num),
+          orElse: () => null,
+        );
     final highlights = ref
         .watch(chapterHighlightsProvider(chapter.id))
         .maybeWhen(data: (list) => list, orElse: () => const <Highlight>[]);
@@ -254,10 +292,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.book.title),
+        // 헤더 공간이 좁아(책갈피+전역 액션) 책 제목은 표시하지 않는다.
         actions: [
           IconButton(
-            tooltip: '편 즐겨찾기',
+            tooltip: '편 책갈피',
             onPressed: () => _toggleFavorite(
               isFavorite.maybeWhen(data: (v) => v, orElse: () => false),
             ),
@@ -270,10 +308,14 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           if (data != null) ...globalAppBarActions(context, ref, data),
         ],
       ),
-      body: ListView(
-        controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 36),
-        children: [
+      // 큰 화면(데스크탑·태블릿)에서 본문이 가로로 끝없이 늘어나지 않도록
+      // 가운데 폭으로 모은다. 폰에선 그대로 꽉 찬다.
+      body: centerConstrained(
+        maxWidth: kReaderMaxWidth,
+        child: ListView(
+          controller: _scrollController,
+          padding: EdgeInsets.fromLTRB(pageMargin, 10, pageMargin, 36),
+          children: [
           Center(
             child: Text(
               'EPISODE ${(_chapterIndex + 1).toString().padLeft(2, '0')}',
@@ -303,6 +345,10 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
           const SizedBox(height: 18),
           Ornament(color: colors.accentSoft),
           const SizedBox(height: 24),
+          if (artwork != null) ...[
+            ChapterArtwork(art: artwork, bleed: pageMargin),
+            const SizedBox(height: 28),
+          ],
           for (var i = 0; i < chapter.blocks.length; i++)
             _ContentBlockView(
               key: i == widget.initialBlockIndex ? _searchTargetKey : null,
@@ -310,6 +356,9 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               blockIndex: i,
               selectedCanon: widget.selectedCanon,
               fontScale: fontScale,
+              lineHeight: lineHeight,
+              letterSpacing: letterSpacing,
+              wordSpacing: wordSpacing,
               highlights: highlights,
               onHighlight: _addHighlight,
               onRemoveHighlight: _removeHighlights,
@@ -344,7 +393,8 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
               ),
             ],
           ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -361,6 +411,9 @@ class _ContentBlockView extends StatelessWidget {
     required this.blockIndex,
     required this.selectedCanon,
     required this.fontScale,
+    required this.lineHeight,
+    required this.letterSpacing,
+    required this.wordSpacing,
     required this.highlights,
     required this.onHighlight,
     required this.onRemoveHighlight,
@@ -371,6 +424,9 @@ class _ContentBlockView extends StatelessWidget {
   final int blockIndex;
   final String selectedCanon;
   final double fontScale;
+  final double lineHeight;
+  final double letterSpacing;
+  final double wordSpacing;
   final List<Highlight> highlights;
   final HighlightCallback onHighlight;
   final RemoveHighlightCallback onRemoveHighlight;
@@ -386,6 +442,9 @@ class _ContentBlockView extends StatelessWidget {
         block: block,
         blockIndex: blockIndex,
         fontScale: fontScale,
+        lineHeight: lineHeight,
+        letterSpacing: letterSpacing,
+        wordSpacing: wordSpacing,
         highlights: highlights,
         onHighlight: onHighlight,
         onRemoveHighlight: onRemoveHighlight,
@@ -398,6 +457,9 @@ class _ContentBlockView extends StatelessWidget {
       blockIndex,
       appColors(context),
       fontScale,
+      lineHeight,
+      letterSpacing,
+      wordSpacing,
       highlights,
       onHighlight,
       onRemoveHighlight,
@@ -411,6 +473,9 @@ class _CanonExtraBlock extends StatelessWidget {
     required this.block,
     required this.blockIndex,
     required this.fontScale,
+    required this.lineHeight,
+    required this.letterSpacing,
+    required this.wordSpacing,
     required this.highlights,
     required this.onHighlight,
     required this.onRemoveHighlight,
@@ -420,6 +485,9 @@ class _CanonExtraBlock extends StatelessWidget {
   final ContentBlock block;
   final int blockIndex;
   final double fontScale;
+  final double lineHeight;
+  final double letterSpacing;
+  final double wordSpacing;
   final List<Highlight> highlights;
   final HighlightCallback onHighlight;
   final RemoveHighlightCallback onRemoveHighlight;
@@ -456,6 +524,9 @@ class _CanonExtraBlock extends StatelessWidget {
             blockIndex,
             colors,
             fontScale,
+            lineHeight,
+            letterSpacing,
+            wordSpacing,
             highlights,
             onHighlight,
             onRemoveHighlight,
@@ -474,6 +545,9 @@ Widget _renderBlock(
   int blockIndex,
   AppColors colors,
   double fontScale,
+  double lineHeight,
+  double letterSpacing,
+  double wordSpacing,
   List<Highlight> highlights,
   HighlightCallback onHighlight,
   RemoveHighlightCallback onRemoveHighlight, {
@@ -488,7 +562,8 @@ Widget _renderBlock(
           text: block.text ?? '',
           marks: block.marks,
           highlights: _rangesFor(highlights, blockIndex, null),
-          baseStyle: _bodyStyle(colors, fontScale),
+          baseStyle:
+              _bodyStyle(colors, fontScale, lineHeight, letterSpacing, wordSpacing),
           onHighlight: (s, e, color) => onHighlight(blockIndex, null, s, e, color),
           onRemoveHighlight: onRemoveHighlight,
           searchQuery: searchHighlight,
@@ -507,7 +582,8 @@ Widget _renderBlock(
           text: block.text ?? '',
           marks: block.marks,
           highlights: _rangesFor(highlights, blockIndex, null),
-          baseStyle: _bodyStyle(colors, fontScale),
+          baseStyle:
+              _bodyStyle(colors, fontScale, lineHeight, letterSpacing, wordSpacing),
           onHighlight: (s, e, color) => onHighlight(blockIndex, null, s, e, color),
           onRemoveHighlight: onRemoveHighlight,
           searchQuery: searchHighlight,
@@ -526,6 +602,9 @@ Widget _renderBlock(
                 index: i,
                 item: block.items[i],
                 fontScale: fontScale,
+                lineHeight: lineHeight,
+                letterSpacing: letterSpacing,
+                wordSpacing: wordSpacing,
                 highlights: _rangesFor(highlights, blockIndex, i),
                 onHighlight: (s, e, color) =>
                     onHighlight(blockIndex, i, s, e, color),
@@ -563,6 +642,9 @@ class _ListItemText extends StatelessWidget {
     required this.index,
     required this.item,
     required this.fontScale,
+    required this.lineHeight,
+    required this.letterSpacing,
+    required this.wordSpacing,
     required this.highlights,
     required this.onHighlight,
     required this.onRemoveHighlight,
@@ -573,6 +655,9 @@ class _ListItemText extends StatelessWidget {
   final int index;
   final ListBlockItem item;
   final double fontScale;
+  final double lineHeight;
+  final double letterSpacing;
+  final double wordSpacing;
   final List<_Range> highlights;
   final _HighlightSpanCallback onHighlight;
   final RemoveHighlightCallback onRemoveHighlight;
@@ -590,7 +675,9 @@ class _ListItemText extends StatelessWidget {
             width: ordered ? 30 : 22,
             child: Text(
               ordered ? '${index + 1}.' : '•',
-              style: _bodyStyle(colors, fontScale).copyWith(color: colors.accent),
+              style: _bodyStyle(
+                      colors, fontScale, lineHeight, letterSpacing, wordSpacing)
+                  .copyWith(color: colors.accent),
             ),
           ),
           Expanded(
@@ -598,7 +685,8 @@ class _ListItemText extends StatelessWidget {
               text: item.text,
               marks: item.marks,
               highlights: highlights,
-              baseStyle: _bodyStyle(colors, fontScale),
+              baseStyle:
+                  _bodyStyle(colors, fontScale, lineHeight, letterSpacing, wordSpacing),
               onHighlight: onHighlight,
               onRemoveHighlight: onRemoveHighlight,
               searchQuery: searchQuery,
@@ -654,7 +742,7 @@ class _SelectableBlockText extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '하이라이트 색',
+                  '형광펜 색',
                   style: handTextStyle(
                     color: colors.ink,
                     fontSize: 20,
@@ -717,7 +805,7 @@ class _SelectableBlockText extends StatelessWidget {
             items.insert(
               0,
               ContextMenuButtonItem(
-                label: '하이라이트 지우기',
+                label: '형광펜 지우기',
                 onPressed: () {
                   onRemoveHighlight(overlap);
                   ContextMenuController.removeAny();
@@ -728,7 +816,7 @@ class _SelectableBlockText extends StatelessWidget {
             items.insert(
               0,
               ContextMenuButtonItem(
-                label: '하이라이트',
+                label: '형광펜',
                 onPressed: () async {
                   ContextMenuController.removeAny();
                   final color = await _pickColor(context);
@@ -820,11 +908,18 @@ class _SelectableBlockText extends StatelessWidget {
   }
 }
 
-TextStyle _bodyStyle(AppColors colors, double fontScale) {
+TextStyle _bodyStyle(
+  AppColors colors,
+  double fontScale,
+  double lineHeight,
+  double letterSpacing,
+  double wordSpacing,
+) {
   return TextStyle(
     color: colors.ink,
     fontSize: 17 * fontScale,
-    height: 1.85,
-    letterSpacing: 0,
+    height: lineHeight,
+    letterSpacing: letterSpacing,
+    wordSpacing: wordSpacing,
   );
 }

@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/app_theme.dart';
+import 'artwork_credits_screen.dart';
 import 'disclaimer_dialog.dart' show disclaimerLines;
+import 'error_view.dart' show kAppVersion, kFeedbackEmail;
 
-const _appVersion = '1.0.0';
-const _feedbackEmail = 'jungwonil11@gmail.com';
+const _appVersion = kAppVersion;
+const _feedbackEmail = kFeedbackEmail;
 const _privacyUrl =
     'https://jungwonil11-jpg.github.io/bible-sseol/privacy.html';
 const _termsUrl = 'https://jungwonil11-jpg.github.io/bible-sseol/terms.html';
@@ -111,6 +113,15 @@ class AboutScreen extends StatelessWidget {
               applicationName: '성경 전체 썰 읽으실분',
               applicationVersion: '버전 $_appVersion',
               applicationLegalese: '© 2026 Victor',
+            ),
+          ),
+          _Item(
+            icon: Icons.palette_outlined,
+            label: '수록 명화 출처',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const ArtworkCreditsScreen(),
+              ),
             ),
           ),
           const SizedBox(height: 32),
