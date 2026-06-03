@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -54,7 +55,15 @@ class AppDatabase {
     if (kIsWeb) {
       return databaseName;
     }
-    final dir = await getApplicationDocumentsDirectory();
+    // 데스크탑은 사용자 문서 폴더(Documents)에 DB 가 노출돼 실수로 지워질 수
+    // 있으므로, 앱 전용 지원 디렉토리(Windows: AppData\Roaming)에 둔다.
+    // 모바일은 앱 내부 문서 디렉토리가 이미 외부에 안 보이므로 그대로 둔다.
+    final isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+    final dir = isDesktop
+        ? await getApplicationSupportDirectory()
+        : await getApplicationDocumentsDirectory();
     return p.join(dir.path, databaseName);
   }
 
