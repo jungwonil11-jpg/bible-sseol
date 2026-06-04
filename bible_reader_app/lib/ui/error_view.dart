@@ -7,8 +7,8 @@ import '../theme/app_theme.dart';
 /// 오류 제보가 도착할 개발자 메일. about_screen의 피드백 메일과 동일.
 const kFeedbackEmail = 'jungwonil11@gmail.com';
 
-/// 제보 메일 본문에 넣는 앱 버전. pubspec의 version(1.0.0+1)과 수기로 맞춘다.
-const kAppVersion = '1.0.0';
+/// 제보 메일 본문에 넣는 앱 버전. pubspec의 version과 수기로 맞춘다(릴리스 때 함께 올릴 것).
+const kAppVersion = '1.0.1';
 
 /// MaterialApp/Theme 바깥에서도 안전하게 쓰는 기본색(Original 테마값).
 const _rawPaper = Color(0xFFFBFAF8);

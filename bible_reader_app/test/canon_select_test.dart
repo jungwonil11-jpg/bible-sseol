@@ -6,6 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:bible_reader_app/data/database/app_database.dart';
 import 'package:bible_reader_app/data/models/bible_data.dart';
 import 'package:bible_reader_app/providers/database_providers.dart';
+import 'package:bible_reader_app/theme/app_theme.dart';
 import 'package:bible_reader_app/ui/canon_select_screen.dart';
 
 void main() {
@@ -24,7 +25,8 @@ void main() {
       ProviderScope(
         overrides: dbOverrides(),
         child: MaterialApp(
-          home: CanonSelectScreen(data: _fixture(), onboarding: true),
+          theme: buildToneTheme(tone: 0),
+          home: CanonSelectScreen(data: _fixture(), mode: CanonSelectMode.onboarding),
         ),
       ),
     );
@@ -40,7 +42,8 @@ void main() {
       ProviderScope(
         overrides: dbOverrides(),
         child: MaterialApp(
-          home: CanonSelectScreen(data: _fixture(), onboarding: true),
+          theme: buildToneTheme(tone: 0),
+          home: CanonSelectScreen(data: _fixture(), mode: CanonSelectMode.onboarding),
         ),
       ),
     );
@@ -51,6 +54,24 @@ void main() {
 
     expect(find.text('개신교 설명입니다.'), findsOneWidget);
     expect(find.text('이 정경으로 읽기'), findsOneWidget);
+  });
+
+  testWidgets('현관 모드: ✕ 닫기 버튼 + 현재 정경에 "지금 읽는 중" 표시', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: dbOverrides(),
+        child: MaterialApp(
+          theme: buildToneTheme(tone: 0),
+          home: CanonSelectScreen(data: _fixture(), mode: CanonSelectMode.home),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byIcon(Icons.close), findsOneWidget);
+    // 기본 정경(개신교)이 현재 읽는 중으로 표시된다.
+    expect(find.text('66권 · 지금 읽는 중'), findsOneWidget);
+    expect(find.text('73권'), findsOneWidget);
   });
 }
 

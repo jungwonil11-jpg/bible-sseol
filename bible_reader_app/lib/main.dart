@@ -16,6 +16,7 @@ import 'ui/canon_select_screen.dart';
 import 'ui/disclaimer_dialog.dart';
 import 'ui/error_view.dart';
 import 'ui/library_screen.dart';
+import 'ui/mouse_nav.dart';
 import 'ui/splash_screen.dart';
 
 /// 가장 최근에 잡힌 에러 — zone/비동기에서 잡힌 에러를 제보 화면이 참고할 수 있게
@@ -106,20 +107,26 @@ class BibleReaderApp extends ConsumerWidget {
     return MaterialApp(
       title: '성경 전체 썰 읽으실분',
       debugShowCheckedModeBanner: false,
+      navigatorKey: MouseNav.navigatorKey,
       theme: buildToneTheme(
         tone: themeTone,
         fontFamily: fontFamily,
       ),
-      builder: (context, child) => Stack(
-        children: [
-          ?child,
-          if (dim > 0)
-            Positioned.fill(
-              child: IgnorePointer(
-                child: ColoredBox(color: Colors.black.withValues(alpha: dim)),
+      // Listener: 마우스 사이드 버튼(뒤로/앞으로) 전역 감지 — 데스크탑용.
+      builder: (context, child) => Listener(
+        onPointerDown: MouseNav.onPointerDown,
+        behavior: HitTestBehavior.translucent,
+        child: Stack(
+          children: [
+            ?child,
+            if (dim > 0)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: ColoredBox(color: Colors.black.withValues(alpha: dim)),
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
       home: const _SplashGate(),
     );
@@ -207,7 +214,7 @@ class _HomeState extends ConsumerState<_Home> {
     return data.when(
       data: (bible) => settings.canonChosen
           ? LibraryScreen(data: bible)
-          : CanonSelectScreen(data: bible, onboarding: true),
+          : CanonSelectScreen(data: bible, mode: CanonSelectMode.onboarding),
       error: (error, stackTrace) => Scaffold(
         body: ErrorView(
           error: error,

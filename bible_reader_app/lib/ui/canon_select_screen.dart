@@ -9,19 +9,27 @@ import '../theme/app_theme.dart';
 
 const _canonKeys = ['protestant', 'catholic', 'orthodox'];
 
-/// 정경 선택 화면. 온보딩(최초 진입)과 설정 양쪽에서 쓴다.
-/// - onboarding: 순서를 랜덤으로 섞고(형평성), 선택 후 "설정에서 바꿀 수 있다" 안내.
-///   선택하면 `canonChosen`이 true가 되어 상위 게이트가 서재로 자동 전환한다.
-/// - 설정: 고정 순서, 선택하면 바로 적용하고 화면을 닫는다(안내 생략).
+/// 정경 선택 화면의 진입 맥락.
+enum CanonSelectMode {
+  /// 최초 진입 온보딩 — 순서 랜덤(형평성), 못 빠져나감, 적용 후 안내 모달.
+  onboarding,
+
+  /// "현관" — 온보딩과 같은 인사 화면을 다시 보여주되, ✕로 안 고르고
+  /// 나올 수 있고 현재 정경에 "지금 읽는 중"을 표시한다.
+  /// 서재 홈버튼과 설정의 정경 행 양쪽에서 이 모드로 진입한다(화면 일원화).
+  home,
+}
+
+/// 정경 선택 화면. 온보딩(최초 진입)과 현관(서재 홈버튼·설정) 두 모드.
 class CanonSelectScreen extends ConsumerStatefulWidget {
   const CanonSelectScreen({
     super.key,
     required this.data,
-    required this.onboarding,
+    required this.mode,
   });
 
   final BibleData data;
-  final bool onboarding;
+  final CanonSelectMode mode;
 
   @override
   ConsumerState<CanonSelectScreen> createState() => _CanonSelectScreenState();
@@ -30,12 +38,14 @@ class CanonSelectScreen extends ConsumerStatefulWidget {
 class _CanonSelectScreenState extends ConsumerState<CanonSelectScreen> {
   late final List<String> _order;
 
+  bool get _onboarding => widget.mode == CanonSelectMode.onboarding;
+
   @override
   void initState() {
     super.initState();
     _order = [..._canonKeys];
     // 온보딩에선 순서 때문에 특정 정경이 우대받는 인상을 주지 않도록 랜덤 섞기.
-    if (widget.onboarding) {
+    if (_onboarding) {
       _order.shuffle(Random());
     }
   }
@@ -45,7 +55,7 @@ class _CanonSelectScreenState extends ConsumerState<CanonSelectScreen> {
       context: context,
       builder: (ctx) => _CanonDetailDialog(
         info: info,
-        onboarding: widget.onboarding,
+        onboarding: _onboarding,
       ),
     );
     if (apply != true) {
@@ -56,8 +66,8 @@ class _CanonSelectScreenState extends ConsumerState<CanonSelectScreen> {
       return;
     }
     // 온보딩: canonChosen=true가 되면 상위 게이트가 서재로 전환한다.
-    // 설정: 이 선택 화면을 닫고 설정으로 돌아간다.
-    if (!widget.onboarding) {
+    // 현관: 이 선택 화면을 닫고 이전 화면(서재/설정)으로 돌아간다.
+    if (!_onboarding) {
       Navigator.of(context).pop();
     }
   }
@@ -67,12 +77,23 @@ class _CanonSelectScreenState extends ConsumerState<CanonSelectScreen> {
     final colors = appColors(context);
     final selected = ref.watch(settingsControllerProvider.select((s) => s.canon));
     return Scaffold(
-      appBar: widget.onboarding ? null : AppBar(title: const Text('정경 선택')),
+      // 현관: 제목 없이 ✕만 — "구경만 하고 닫기"가 가능함을 드러낸다.
+      appBar: _onboarding
+          ? null
+          : AppBar(
+              leading: IconButton(
+                tooltip: '닫기',
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.close),
+              ),
+            ),
+      // 데스크탑·태블릿에서 카드가 가로로 끝없이 늘어나지 않게 가운데 폭으로.
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-          children: [
-            if (widget.onboarding) ...[
+        child: centerConstrained(
+          maxWidth: kReaderMaxWidth,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+            children: [
               Text(
                 '어떤 성경으로\n읽을까요?',
                 style: handTextStyle(
@@ -87,14 +108,15 @@ class _CanonSelectScreenState extends ConsumerState<CanonSelectScreen> {
                 style: TextStyle(color: colors.inkSoft, height: 1.5),
               ),
               const SizedBox(height: 28),
+              for (final key in _order)
+                _CanonCard(
+                  info: widget.data.canonInfo[key]!,
+                  // 현관에선 현재 읽는 정경을 강조 표시. 온보딩은 첫 선택이라 없음.
+                  current: !_onboarding && key == selected,
+                  onTap: () => _onTap(key, widget.data.canonInfo[key]!),
+                ),
             ],
-            for (final key in _order)
-              _CanonCard(
-                info: widget.data.canonInfo[key]!,
-                selected: !widget.onboarding && key == selected,
-                onTap: () => _onTap(key, widget.data.canonInfo[key]!),
-              ),
-          ],
+          ),
         ),
       ),
     );
@@ -104,12 +126,15 @@ class _CanonSelectScreenState extends ConsumerState<CanonSelectScreen> {
 class _CanonCard extends StatelessWidget {
   const _CanonCard({
     required this.info,
-    required this.selected,
+    required this.current,
     required this.onTap,
   });
 
   final CanonInfo info;
-  final bool selected;
+
+  /// 현재 읽고 있는 정경 — 테두리 강조 + "지금 읽는 중" 표기.
+  final bool current;
+
   final VoidCallback onTap;
 
   @override
@@ -126,8 +151,8 @@ class _CanonCard extends StatelessWidget {
             color: colors.paperEdge,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: selected ? colors.accent : colors.line,
-              width: selected ? 2 : 1,
+              color: current ? colors.accent : colors.line,
+              width: current ? 2 : 1,
             ),
           ),
           child: Row(
@@ -146,7 +171,7 @@ class _CanonCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${info.total}권',
+                      current ? '${info.total}권 · 지금 읽는 중' : '${info.total}권',
                       style: TextStyle(color: colors.inkSoft, fontSize: 14),
                     ),
                   ],
@@ -186,7 +211,7 @@ class _CanonDetailDialogState extends State<_CanonDetailDialog> {
       return AlertDialog(
         backgroundColor: colors.paperEdge,
         content: Text(
-          '정경은 설정에서 언제든 바꿀 수 있어요.',
+          '정경은 서재 왼쪽 위의 집 모양 버튼에서 언제든 바꿀 수 있어요.',
           style: TextStyle(color: colors.ink, height: 1.5),
         ),
         actions: [

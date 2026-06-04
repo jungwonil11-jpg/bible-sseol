@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/database/daos.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../data/models/bible_data.dart';
 import '../providers/reading_providers.dart';
 import '../providers/settings_controller.dart';
+import '../providers/update_providers.dart';
 import '../theme/app_theme.dart';
 import 'attendance_calendar.dart';
 import 'book_detail_screen.dart';
+import 'canon_select_screen.dart';
+import 'disclaimer_dialog.dart';
 import 'global_app_bar_actions.dart';
 import 'reader_screen.dart';
 import 'stats_logic.dart';
@@ -168,6 +173,37 @@ class LibraryScreen extends ConsumerWidget {
 
   final BibleData data;
 
+  /// 홈(현관) 버튼: 맨처음 경험을 재생한다 — 디스클레이머('다시 보지 않기'를
+  /// 안 한 상태면)부터 다시 띄우고, 정경 선택 화면(현관 모드)으로 간다.
+  /// 현관에선 안 고르고 ✕로 닫으면 그대로 서재로 돌아온다.
+  Future<void> _openEntrance(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final settings = ref.read(settingsControllerProvider);
+    if (!settings.disclaimerAgreed) {
+      final dontShowAgain = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => DisclaimerDialog(
+          onAgree: (dontShow) => Navigator.of(context).pop(dontShow),
+        ),
+      );
+      if (dontShowAgain == true) {
+        await ref.read(settingsControllerProvider.notifier).agreeDisclaimer();
+      }
+      if (!context.mounted) {
+        return;
+      }
+    }
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            CanonSelectScreen(data: data, mode: CanonSelectMode.home),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsControllerProvider);
@@ -179,8 +215,14 @@ class LibraryScreen extends ConsumerWidget {
     final newBooks = _booksFor(const ['new'], selectedCanon);
 
     return Scaffold(
+      // 제목 대신 왼쪽 홈버튼 — 유저 머릿속 "처음 화면"(정경 선택)으로 가는 문.
+      // 본문 뷰어가 제목을 생략하는 것과 같은 디자인 언어(공간보다 기능).
       appBar: AppBar(
-        title: const Text('성경읽기'),
+        leading: IconButton(
+          tooltip: '처음 화면',
+          onPressed: () => _openEntrance(context, ref),
+          icon: const Icon(Icons.home_outlined),
+        ),
         actions: globalAppBarActions(context, ref, data),
       ),
       // 큰 화면에서 목록이 가로로 끝없이 늘어나지 않게 가운데 폭으로 모은다.
@@ -189,6 +231,7 @@ class LibraryScreen extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 48),
           children: [
+            const _UpdateBanner(),
             const _StreakButton(),
           const SizedBox(height: 22),
           _ContinueCard(data: data),
@@ -222,6 +265,66 @@ class LibraryScreen extends ConsumerWidget {
             return byOrder != 0 ? byOrder : a.order.compareTo(b.order);
           });
     return books;
+  }
+}
+
+/// 데스크탑 새 버전 알림 배너. 실행 시 1회 GitHub 릴리스를 조용히 확인해
+/// (updateInfoProvider, 실패 침묵) 새 버전이 있을 때만 나타난다.
+/// ✕로 닫으면 그 버전은 다시 알리지 않는다. 모바일에선 항상 빈 위젯.
+class _UpdateBanner extends ConsumerWidget {
+  const _UpdateBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = appColors(context);
+    final update = ref
+        .watch(updateInfoProvider)
+        .maybeWhen(data: (u) => u, orElse: () => null);
+    final dismissed = ref
+        .watch(dismissedUpdateTagProvider)
+        .maybeWhen(data: (t) => t, orElse: () => null);
+    if (update == null || update.tag == dismissed) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Material(
+        color: colors.paperEdge,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => launchUrl(
+            Uri.parse(update.url),
+            mode: LaunchMode.externalApplication,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 12, 6, 12),
+            child: Row(
+              children: [
+                Icon(Icons.file_download_outlined,
+                    color: colors.accent, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '새 버전 ${update.version} 나옴 — 받으러 가기',
+                    style: TextStyle(
+                      color: colors.ink,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: '이 버전 알림 닫기',
+                  onPressed: () => dismissUpdate(ref, update.tag),
+                  icon: Icon(Icons.close, color: colors.inkSoft, size: 18),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

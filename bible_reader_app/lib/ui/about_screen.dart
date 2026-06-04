@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart'
+    show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../providers/update_providers.dart' show kReleasesLatestUrl;
 import '../theme/app_theme.dart';
 import 'artwork_credits_screen.dart';
 import 'disclaimer_dialog.dart' show disclaimerLines;
@@ -8,6 +11,12 @@ import 'error_view.dart' show kAppVersion, kFeedbackEmail;
 
 const _appVersion = kAppVersion;
 const _feedbackEmail = kFeedbackEmail;
+
+bool get _isDesktop =>
+    !kIsWeb &&
+    (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS);
 const _privacyUrl =
     'https://jungwonil11-jpg.github.io/bible-sseol/privacy.html';
 const _termsUrl = 'https://jungwonil11-jpg.github.io/bible-sseol/terms.html';
@@ -87,6 +96,18 @@ class AboutScreen extends StatelessWidget {
             label: '피드백 보내기',
             onTap: () => _open(context, _feedbackUri),
           ),
+          // 데스크탑은 스토어가 없어 업데이트 경로가 이 링크뿐이다.
+          // (모바일은 플레이스토어가 담당하므로 표시하지 않는다.)
+          if (_isDesktop)
+            _Item(
+              icon: Icons.file_download_outlined,
+              label: '최신 버전 확인 (GitHub)',
+              onTap: () => _open(
+                context,
+                Uri.parse(kReleasesLatestUrl),
+                mode: LaunchMode.externalApplication,
+              ),
+            ),
           _Item(
             icon: Icons.shield_outlined,
             label: '개인정보처리방침',

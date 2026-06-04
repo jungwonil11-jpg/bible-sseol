@@ -80,7 +80,7 @@ class SettingsScreen extends ConsumerWidget {
                     onReset: controller.resetBody,
                   ),
                   rows: [
-                    _FontBar(
+                    _FontChips(
                       colors: colors,
                       fontFamily: settings.fontFamily,
                       onChanged: controller.setFontFamily,
@@ -177,10 +177,13 @@ class SettingsScreen extends ConsumerWidget {
                         icon: Icons.menu_book_outlined,
                         title: data.canonInfo[settings.canon]?.name ?? '정경',
                         subtitle: '탭하여 변경',
+                        // 홈버튼의 "현관"과 같은 화면으로 — 진입점은 둘, 화면은 하나.
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (_) =>
-                                CanonSelectScreen(data: data, onboarding: false),
+                            builder: (_) => CanonSelectScreen(
+                              data: data,
+                              mode: CanonSelectMode.home,
+                            ),
                           ),
                         ),
                       ),
@@ -593,8 +596,13 @@ class _ThemeToneBar extends StatelessWidget {
 
 /// 글씨체 스텝 슬라이더 — 6개 글씨체 지점에 스냅. 우측에 현재 글씨체 이름을
 /// 그 글씨체로 렌더해 보여주고, 끌면 상단 라이브 프리뷰가 문장 전체로 반영한다.
-class _FontBar extends StatelessWidget {
-  const _FontBar({
+/// 글씨체 선택 칩. 슬라이더(스텝)였으나 "현재값이 안 보이고 바로 못 고른다"는
+/// 피드백으로 버튼식 전환 — 6종이 한눈에 보이고 탭 1번. 칩 라벨은 각자 자기
+/// 글씨체로 렌더해 버튼 자체가 미리보기가 되게 한다.
+/// 균등폭 격자: 좁은 화면(폰) 3×2, 넓은 화면(데스크탑·태블릿) 6×1 한 줄 —
+/// 행 전체를 채워 슬라이더들과 같은 폭 리듬을 유지한다(가운데 붕 뜸 방지).
+class _FontChips extends StatelessWidget {
+  const _FontChips({
     required this.colors,
     required this.fontFamily,
     required this.onChanged,
@@ -604,56 +612,83 @@ class _FontBar extends StatelessWidget {
   final String? fontFamily;
   final ValueChanged<String?> onChanged;
 
+  /// 6칸 한 줄이 무리 없는 최소 폭(칩당 ~100 + 간격). 미만이면 3×2.
+  static const _sixColumnMinWidth = 640.0;
+
   @override
   Widget build(BuildContext context) {
-    final n = fontFamilyOptions.length;
-    var index = fontFamilyOptions.indexWhere((o) => o.$2 == fontFamily);
-    if (index < 0) {
-      index = 0;
-    }
-    final current = fontFamilyOptions[index];
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Text('글씨체', style: TextStyle(color: colors.ink, fontSize: 15)),
-              const Spacer(),
-              // 현재 글씨체 이름을 그 글씨체로 렌더 — 타입페이스를 바로 보여줌.
-              Text(
-                current.$1,
-                style: TextStyle(
-                  fontFamily: current.$2,
-                  color: colors.ink,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 3,
-              activeTrackColor: colors.accent,
-              inactiveTrackColor: colors.line,
-              thumbColor: colors.accent,
-              activeTickMarkColor: colors.accentSoft,
-              inactiveTickMarkColor: colors.inkSoft.withValues(alpha: 0.4),
-              overlayColor: colors.accent.withValues(alpha: 0.12),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-            ),
-            child: Slider(
-              value: index.toDouble(),
-              max: (n - 1).toDouble(),
-              divisions: n - 1,
-              onChanged: (v) => onChanged(
-                fontFamilyOptions[v.round().clamp(0, n - 1)].$2,
-              ),
-            ),
+          Text('글씨체', style: TextStyle(color: colors.ink, fontSize: 15)),
+          const SizedBox(height: 12),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cols =
+                  constraints.maxWidth >= _sixColumnMinWidth ? 6 : 3;
+              final rows = <Widget>[];
+              for (var i = 0; i < fontFamilyOptions.length; i += cols) {
+                if (i > 0) {
+                  rows.add(const SizedBox(height: 8));
+                }
+                rows.add(
+                  Row(
+                    children: [
+                      for (var j = i;
+                          j < i + cols && j < fontFamilyOptions.length;
+                          j++) ...[
+                        if (j > i) const SizedBox(width: 8),
+                        Expanded(
+                          child: _chip(
+                            fontFamilyOptions[j],
+                            fontFamilyOptions[j].$2 == fontFamily,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                );
+              }
+              return Column(children: rows);
+            },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _chip((String, String?) option, bool selected) {
+    return InkWell(
+      onTap: () => onChanged(option.$2),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.accent.withValues(alpha: 0.08)
+              : colors.paperEdge,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: selected ? colors.accent : colors.line,
+            width: selected ? 1.6 : 1,
+          ),
+        ),
+        // 긴 이름(나눔스퀘어)이 좁은 칸에서 넘치지 않게 살짝만 줄여 맞춘다.
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            option.$1,
+            style: TextStyle(
+              fontFamily: option.$2,
+              color: colors.ink,
+              fontSize: 15,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+            ),
+          ),
+        ),
       ),
     );
   }

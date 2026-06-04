@@ -11,6 +11,7 @@ import '../providers/settings_controller.dart';
 import '../theme/app_theme.dart';
 import 'chapter_artwork.dart';
 import 'global_app_bar_actions.dart';
+import 'mouse_nav.dart';
 import 'ornament.dart';
 
 /// 하이라이트 색 팔레트(인덱스로 DB에 저장). 라이트/세피아/다크 공통 파스텔.
@@ -65,6 +66,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
   @override
   void initState() {
     super.initState();
+    MouseNav.register(_handleMouseNav);
     _chapterIndex = widget.initialChapterIndex;
     _scrollController = ScrollController()..addListener(_onScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -93,8 +95,29 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _container = ProviderScope.containerOf(context, listen: false);
   }
 
+  /// 마우스 사이드 버튼: 뒤로=이전 편, 앞으로=다음 편.
+  /// 위에 다른 화면(설정·검색 등)이 떠 있으면 건드리지 않고 전역 동작에 넘긴다.
+  /// 1편에서 뒤로 버튼은 false를 반환해 전역 pop(책 상세로 나가기)에 위임한다.
+  bool _handleMouseNav(bool isBack) {
+    if (!mounted || !(ModalRoute.of(context)?.isCurrent ?? false)) {
+      return false;
+    }
+    if (isBack) {
+      if (_chapterIndex > 0) {
+        _openChapter(_chapterIndex - 1);
+        return true;
+      }
+      return false;
+    }
+    if (_chapterIndex < widget.book.chapters.length - 1) {
+      _openChapter(_chapterIndex + 1);
+    }
+    return true; // 마지막 편의 앞으로 버튼은 그냥 무시(전역 동작 없음).
+  }
+
   @override
   void dispose() {
+    MouseNav.unregister(_handleMouseNav);
     final container = _container;
     if (container != null) {
       if (_scrollController.hasClients) {
