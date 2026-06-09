@@ -57,6 +57,9 @@ class _SplashViewState extends State<SplashView> {
             ? const SizedBox.expand()
             : SafeArea(
                 child: Column(
+                  // 데스크탑 와이드 화면 대응: 자식을 풀폭으로 펴서 Column이 좌측으로
+                  // 쏠리지 않게 하고, 이미지는 그 풀폭 안에서 가운데 정렬(상하는 Expanded).
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Expanded(
                       child: Padding(
@@ -64,6 +67,7 @@ class _SplashViewState extends State<SplashView> {
                         child: Image.asset(
                           artwork.assetPath,
                           fit: BoxFit.contain,
+                          alignment: Alignment.center,
                           errorBuilder: (_, _, _) => const SizedBox.expand(),
                         ),
                       ),
