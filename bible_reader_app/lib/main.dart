@@ -1,7 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart'
-    show kIsWeb, defaultTargetPlatform, TargetPlatform, FlutterError, FlutterErrorDetails, PlatformDispatcher, LicenseRegistry, LicenseEntryWithLineBreaks;
+    show
+        kIsWeb,
+        defaultTargetPlatform,
+        TargetPlatform,
+        FlutterError,
+        FlutterErrorDetails,
+        PlatformDispatcher,
+        LicenseRegistry,
+        LicenseEntryWithLineBreaks;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,15 +59,15 @@ Future<void> main() async {
       'assets/licenses/Nanum-OFL.txt',
       'assets/licenses/GamjaFlower-OFL.txt',
     ]) {
-      yield LicenseEntryWithLineBreaks(
-        const ['fonts'],
-        await rootBundle.loadString(path),
-      );
+      yield LicenseEntryWithLineBreaks(const [
+        'fonts',
+      ], await rootBundle.loadString(path));
     }
   });
   // 플랫폼별 sqflite 백엔드 선택. 안드로이드/iOS는 기본 팩토리가 자동 설정되지만
   // 웹은 WASM 기반 FFI 웹 팩토리, 데스크탑은 네이티브 FFI 팩토리를 직접 지정해야 한다.
-  final isDesktop = !kIsWeb &&
+  final isDesktop =
+      !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.windows ||
           defaultTargetPlatform == TargetPlatform.linux ||
           defaultTargetPlatform == TargetPlatform.macOS);
@@ -108,24 +116,31 @@ class BibleReaderApp extends ConsumerWidget {
       title: '성경전체썰읽으실분',
       debugShowCheckedModeBanner: false,
       navigatorKey: MouseNav.navigatorKey,
-      theme: buildToneTheme(
-        tone: themeTone,
-        fontFamily: fontFamily,
-      ),
-      // Listener: 마우스 사이드 버튼(뒤로/앞으로) 전역 감지 — 데스크탑용.
-      builder: (context, child) => Listener(
-        onPointerDown: MouseNav.onPointerDown,
-        behavior: HitTestBehavior.translucent,
-        child: Stack(
-          children: [
-            ?child,
-            if (dim > 0)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: ColoredBox(color: Colors.black.withValues(alpha: dim)),
+      // Esc 처리용 최상단 라우트 추적(다이얼로그 위에선 Esc로 pop하지 않음).
+      navigatorObservers: [KeyNav.observer],
+      theme: buildToneTheme(tone: themeTone, fontFamily: fontFamily),
+      // 데스크탑 전역 입력: Listener = 마우스 사이드 버튼(뒤로/앞으로),
+      // Focus = 키보드(←/→ 편 이동, Esc 뒤로 — 포커스 위젯이 안 먹은 키만 받음).
+      builder: (context, child) => Focus(
+        canRequestFocus: false,
+        skipTraversal: true,
+        onKeyEvent: KeyNav.onKeyEvent,
+        child: Listener(
+          onPointerDown: MouseNav.onPointerDown,
+          behavior: HitTestBehavior.translucent,
+          child: Stack(
+            children: [
+              ?child,
+              if (dim > 0)
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: ColoredBox(
+                      color: Colors.black.withValues(alpha: dim),
+                    ),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
       home: const _SplashGate(),
@@ -253,4 +268,3 @@ class _LoadingScreen extends StatelessWidget {
     );
   }
 }
-

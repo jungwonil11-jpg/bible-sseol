@@ -56,6 +56,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
   flutter_native_splash: ^2.4.0
+  # MS Store 제출용 MSIX 패키징 — 빌드: dart run msix:create --store
+  msix: ^3.16.9
 
 # 런처 아이콘 생성 설정 — 갱신 시: dart run flutter_launcher_icons
 flutter_launcher_icons:
@@ -72,6 +74,20 @@ flutter_native_splash:
   color: "#2A2438"
   android_12:
     color: "#2A2438"
+
+# MS Store 제출용 MSIX 설정 — Identity 값은 Partner Center 제품 ID(2026-06-07 예약)와 일치해야 함.
+# 빌드: flutter build windows → dart run msix:create --store (★encrypt_books.dart 선행, DESKTOP_RELEASE.md 참고)
+# --store 플래그 = 스토어 업로드용(로컬 서명 안 함 — 심사 통과 시 MS가 서명). 산출물: build/windows/x64/runner/Release/*.msix
+msix_config:
+  display_name: 성경전체썰읽으실분
+  publisher_display_name: VictorWorld
+  identity_name: VictorWorld.61314FB2ADE9D
+  publisher: CN=CF6591F8-F079-415A-8986-CDDB16AA7981
+  msix_version: 1.0.1.0
+  logo_path: assets/icon/app_icon.png
+  languages: ko
+  capabilities: internetClient
+  store: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

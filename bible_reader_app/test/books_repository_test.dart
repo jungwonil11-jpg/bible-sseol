@@ -6,24 +6,19 @@ import 'package:bible_reader_app/data/repositories/books_repository.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('loads books.json from assets', () async {
+  // 공개 repo 번들은 '창세기 샘플'(전체 76권은 비공개, 샘플 전용 키로 암호화).
+  // 암호화본(books.json.enc)이 샘플 키로 복호화되어 정상 구조로 로드되는지 검증한다.
+  test('loads the bundled sample encrypted books asset', () async {
     final data = await BooksRepository().loadBooks();
 
     expect(data.schemaVersion, 1);
-    expect(data.books.length, 77);
-    expect(data.books.where((book) => book.testament == 'old'), hasLength(39));
-    expect(data.books.where((book) => book.testament == 'new'), hasLength(27));
-    expect(data.books.where((book) => book.testament == 'deut'), hasLength(11));
-    expect(data.books.expand((book) => book.chapters), hasLength(379));
-
-    final esther = data.books.singleWhere((book) => book.id == 'esther');
-    final canonExtraBlock = esther.chapters
-        .expand((chapter) => chapter.blocks)
-        .firstWhere((block) => block.canonExtra);
-    expect(canonExtraBlock.canon, ['catholic', 'orthodox']);
-    expect(canonExtraBlock.marks.first.type, 'strong');
+    expect(data.books, isNotEmpty);
 
     final genesis = data.books.singleWhere((book) => book.id == 'genesis');
+    expect(genesis.testament, 'old');
+    expect(genesis.chapters, isNotEmpty);
+
+    // 복호화 결과가 구조화된 본문(목록 블록·마크)까지 온전한지 확인.
     final listBlock = genesis.chapters.first.blocks.firstWhere(
       (block) => block.type == ContentBlockType.ul,
     );

@@ -29,7 +29,14 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: dbOverrides(),
+        overrides: [
+          ...dbOverrides(),
+          // 설정의 _load(실 DB 비동기)가 뒤늦게 끝나며 chooseCanon 을 기본값으로
+          // 덮어쓰지 않도록, 로드를 건너뛰고 정경을 고정한 컨트롤러로 대체한다.
+          settingsControllerProvider.overrideWith(
+            () => _FixedSettingsController('protestant'),
+          ),
+        ],
         child: MaterialApp(
           theme: buildAppTheme(theme: readingThemes.first),
           home: LibraryScreen(data: data),
@@ -38,8 +45,8 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('개신교 66권'), findsOneWidget);
-    // 개신교에선 제2경전 책(토비트)이 canon 필터로 빠져 안 보임
+    // 정경 권수 헤더는 서재에서 제거됨(온보딩/설정으로 일원화). 여기선 canon
+    // 필터링 동작만 검증한다 — 개신교에선 추가 권(토비트)이 빠져 안 보인다.
     expect(find.text('토비트'), findsNothing);
 
     // 정경을 천주교로 전환(서재 칩 제거됨 → 설정 컨트롤러 직접 호출).
@@ -52,8 +59,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('천주교 73권'), findsOneWidget);
-    // 제2경전은 별도 섹션이 아니라 구약 흐름에 끼어 나타남 (라벨 없음, 책만 등장)
+    // 추가 권은 별도 섹션이 아니라 구약 흐름에 끼어 나타남 (라벨 없음, 책만 등장)
     expect(find.text('제2경전'), findsNothing);
     expect(find.text('토비트'), findsOneWidget);
   });
@@ -198,4 +204,22 @@ BibleBook _book(
       ),
     ],
   );
+}
+
+/// 설정 DB 로드(_load)를 건너뛰고 정경만 고정하는 테스트용 컨트롤러.
+/// chooseCanon 등 변경 동작은 상위(SettingsController) 구현을 그대로 쓴다.
+class _FixedSettingsController extends SettingsController {
+  _FixedSettingsController(this._initialCanon);
+
+  final String _initialCanon;
+
+  @override
+  AppSettings build() => AppSettings(canon: _initialCanon, loaded: true);
+
+  @override
+  Future<void> chooseCanon(String canon) async {
+    // 위젯 테스트에서 실 sqlite write 가 행(hang)나는 것을 피하려고, DB 쓰기
+    // 없이 상태만 바꾼다. (정경 전환의 UI 반영만 검증하면 충분.)
+    state = state.copyWith(canon: canon, canonChosen: true);
+  }
 }

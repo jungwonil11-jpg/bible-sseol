@@ -52,6 +52,23 @@ flutter build windows --release
 - 태그(예 `v1.0.0-desktop`) + zip 드래그&드롭 첨부 → Publish.
 - zip 안에 본문(암호화본)이 들어가지만 git 본체엔 안 들어감(Releases는 별개 저장소).
 
+## 4-1. MS Store 제출용 MSIX 빌드 (2026-06-07 추가)
+
+> Partner Center에 `성경전체썰읽으실분` 예약 완료(2026-06-07). Identity 값은 `pubspec.yaml`의 `msix_config`에 박혀 있음(Partner Center 제품 ID와 일치 필수 — 바뀌면 양쪽 다 수정).
+
+```bash
+# (bible_reader_app 폴더에서 — 2번 암호화 선행은 동일)
+dart run tool/encrypt_books.dart
+flutter build windows --release
+dart run msix:create --store
+```
+
+- 산출물: `build/windows/x64/runner/Release/bible_reader_app.msix`
+- `--store` = 스토어 업로드 전용(로컬 서명 안 함). **이 msix는 더블클릭 설치 안 됨** — Partner Center 제출용으로만 쓰는 게 정상.
+- 업로드: Partner Center → 성경전체썰읽으실분 → 제출 시작 → 패키지에 `.msix` 업로드 + 등록정보(설명·스샷·정책 URL) 작성 → 제출.
+- 버전 올릴 때: `pubspec.yaml`의 `version`과 `msix_config.msix_version`(x.x.x.0 형식) 둘 다 갱신.
+- GitHub Releases zip 배포(3~4번)는 병행 유지 — zip은 SAC 환경에서 계속 차단되므로 SAC 유저는 스토어로 안내.
+
 ## 5. ★ 안드로이드 빌드도 영향 있음 (중요)
 
 본문 로딩이 `.enc` 복호화로 바뀌었으므로 **안드 최종 빌드 전에도 2번(암호화)을 먼저** 해야 함.
@@ -66,6 +83,6 @@ flutter build appbundle            # 그 다음 (서명 자동)
 
 ## 후속(미적용, 선택)
 
-- 키보드 네비(←→ 페이지, Esc 뒤로), 마우스 가속 등은 안 넣음(마우스휠 스크롤은 기본 동작).
+- ~~키보드 네비~~ → 적용됨(2026-06-07): ←/→ 이전·다음 편, Esc 뒤로(`mouse_nav.dart`의 `KeyNav`). 마우스휠 스크롤은 기본 동작.
 - macOS/Linux 빌드(폴더 미생성). 필요 시 `flutter create --platforms=macos,linux .`
 - 데스크탑 실제 화면(본문 폭·창 크기·명화 풀폭) 눈으로 확인은 Victor 몫.

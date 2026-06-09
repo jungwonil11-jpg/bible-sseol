@@ -95,7 +95,7 @@ class _ReaderScreenState extends ConsumerState<ReaderScreen> {
     _container = ProviderScope.containerOf(context, listen: false);
   }
 
-  /// 마우스 사이드 버튼: 뒤로=이전 편, 앞으로=다음 편.
+  /// 마우스 사이드 버튼(뒤로/앞으로) + 키보드(←/→): 이전 편/다음 편.
   /// 위에 다른 화면(설정·검색 등)이 떠 있으면 건드리지 않고 전역 동작에 넘긴다.
   /// 1편에서 뒤로 버튼은 false를 반환해 전역 pop(책 상세로 나가기)에 위임한다.
   bool _handleMouseNav(bool isBack) {

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import 'package:bible_reader_app/data/database/app_database.dart';
 import 'package:bible_reader_app/data/database/daos.dart';
 import 'package:bible_reader_app/data/models/bible_data.dart';
+import 'package:bible_reader_app/providers/database_providers.dart';
 import 'package:bible_reader_app/providers/reading_providers.dart';
 import 'package:bible_reader_app/theme/app_theme.dart';
 import 'package:bible_reader_app/ui/book_detail_screen.dart';
@@ -13,10 +16,24 @@ import 'package:bible_reader_app/ui/disclaimer_dialog.dart';
 // 위젯 테스트는 실DB 대신 프로바이더를 고정값으로 override한다.
 // (실 sqlite I/O는 pumpAndSettle와 안 맞아 행. DAO CRUD는 database_test.dart에서 검증.)
 void main() {
+  // BookDetailScreen 은 설정(SettingsController)을 읽고, 설정은 sqlite 에 저장된다.
+  // 위젯 자체는 override 로 고정하지만, 설정 로드 경로가 인메모리 DB 를 타도록
+  // FFI 팩토리를 초기화하고 appDatabaseProvider 를 인메모리로 덮는다.
+  setUpAll(sqfliteFfiInit);
+
+  dbOverrides() {
+    final db = AppDatabase(
+      databaseFactory: databaseFactoryFfi,
+      databasePath: inMemoryDatabasePath,
+    );
+    return [appDatabaseProvider.overrideWithValue(db)];
+  }
+
   testWidgets('읽음 상태가 책 상세 진행률/체크로 반영됨', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          ...dbOverrides(),
           bookReadStatusProvider('genesis').overrideWith(
             (ref) async => [
               ChapterReadStatus(
@@ -77,11 +94,11 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    // 즐겨찾기 탭
+    // 책갈피 탭
     expect(find.text('창세기 · 1편'), findsOneWidget);
 
-    // 하이라이트 탭으로 전환
-    await tester.tap(find.text('하이라이트'));
+    // 형광펜 탭으로 전환
+    await tester.tap(find.text('형광펜'));
     await tester.pump();
     await tester.pump();
     // genesis:2 블록0 0~4 → '천지창조'
