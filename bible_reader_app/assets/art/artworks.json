@@ -8,40 +8,40 @@
   },
   "genesis": {
     "1": {
-      "artist": "미켈란젤로",
-      "title": "아담의 창조",
-      "year": "c.1511",
+      "artist": "귀스타브 도레",
+      "title": "빛의 창조",
+      "year": "1866",
       "file": "art/GEN-1.jpg",
       "license": "Public domain",
       "source": "Wikimedia Commons",
-      "commons": "Michelangelo - Creation of Adam (cropped).jpg"
+      "commons": "001.The Creation of Light.jpg"
     },
     "2": {
-      "artist": "미켈란젤로",
-      "title": "타락과 낙원 추방",
-      "year": "1509–1510",
+      "artist": "토머스 콜",
+      "title": "에덴 동산",
+      "year": "1828",
       "file": "art/GEN-2.jpg",
       "license": "Public domain",
       "source": "Wikimedia Commons",
-      "commons": "Michelangelo, Fall and Expulsion from Garden of Eden 00.jpg"
+      "commons": "Cole Thomas The Garden of Eden 1828.jpg"
     },
     "3": {
-      "artist": "티치아노",
-      "title": "카인과 아벨",
-      "year": "1542–1544",
+      "artist": "클로드-조제프 베르네",
+      "title": "카인과 아벨의 제물",
+      "year": "c.1750",
       "file": "art/GEN-3.jpg",
       "license": "Public domain",
       "source": "Wikimedia Commons",
-      "commons": "Titian - Cain and Abel - WGA22778.jpg"
+      "commons": "Claude-Joseph Vernet - Cain et Abel apportant leurs sacrifices.jpg"
     },
     "4": {
-      "artist": "미켈란젤로",
-      "title": "대홍수",
-      "year": "c.1509",
+      "artist": "에드워드 힉스",
+      "title": "노아의 방주",
+      "year": "1846",
       "file": "art/GEN-4.jpg",
       "license": "Public domain",
       "source": "Wikimedia Commons",
-      "commons": "El Diluvio.jpg"
+      "commons": "Edward Hicks, American - Noah's Ark - Google Art Project.jpg"
     },
     "5": {
       "artist": "대 피터르 브뤼헐",
@@ -71,13 +71,13 @@
       "commons": "Jacob Jordaens - The Flight of Lot and His Family from Sodom (after Rubens) - Google Art Project.jpg"
     },
     "8": {
-      "artist": "렘브란트",
-      "title": "이삭의 희생",
-      "year": "1635",
+      "artist": "페드로 데 오렌테",
+      "title": "모리아로 가는 아브라함과 이삭",
+      "year": "c.1640",
       "file": "art/GEN-8.jpg",
       "license": "Public domain",
       "source": "Wikimedia Commons",
-      "commons": "Rembrandt Harmensz. van Rijn 035.jpg"
+      "commons": "Abraham e Isaac camino del sacrificio, de Pedro de Orrente (Museo del Prado).jpg"
     },
     "9": {
       "artist": "호베르트 플린크",
