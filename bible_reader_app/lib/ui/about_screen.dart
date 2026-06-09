@@ -31,7 +31,7 @@ class AboutScreen extends StatelessWidget {
         scheme: 'mailto',
         path: _feedbackEmail,
         queryParameters: {
-          'subject': '[성경 전체 썰 읽으실분] 피드백',
+          'subject': '[성경전체썰읽으실분] 피드백',
           'body': '앱 버전: $_appVersion\n\n— 아래에 의견을 적어주세요 —\n',
         },
       );
@@ -131,7 +131,7 @@ class AboutScreen extends StatelessWidget {
             label: '오픈소스 라이선스',
             onTap: () => showLicensePage(
               context: context,
-              applicationName: '성경 전체 썰 읽으실분',
+              applicationName: '성경전체썰읽으실분',
               applicationVersion: '버전 $_appVersion',
               applicationLegalese: '© 2026 Victor',
             ),

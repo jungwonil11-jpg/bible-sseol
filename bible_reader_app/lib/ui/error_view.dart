@@ -42,7 +42,7 @@ Uri buildReportUri(Object error, StackTrace? stack) {
     scheme: 'mailto',
     path: kFeedbackEmail,
     queryParameters: {
-      'subject': '[성경 전체 썰 읽으실분] 오류 제보',
+      'subject': '[성경전체썰읽으실분] 오류 제보',
       'body': '여기에 한마디 적어주셔도 됩니다 (안 적으셔도 돼요).\n\n\n'
           '— 아래는 문제 해결을 위한 자동 정보입니다 —\n'
           '${describeError(error, stack)}',

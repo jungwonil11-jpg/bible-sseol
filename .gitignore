@@ -1,11 +1,15 @@
-# 본문(저작 콘텐츠) — 공개 repo엔 미포함
+# 본문(저작 콘텐츠) — 전체 본문은 공개 repo엔 미포함
 /books.js
 /books_src/
 **/books.json
 **/books.json.enc
+# ── 단, 공개 데모용 '창세기 샘플' 암호화본은 포함한다(전체 본문 아님). 평문은 계속 제외. ──
+!bible_reader_app/assets/books.json.enc
 
-# 명화(이미지 자산) — 공개 repo엔 미포함 (PD지만 용량 때문에 zip/Release로만 배포)
+# 명화(이미지 자산) — 전체 세트는 미포함(용량). 단 창세기 샘플 명화는 포함.
 **/assets/art/
+!bible_reader_app/assets/art/
+!bible_reader_app/assets/art/**
 
 # 문서 — README.md만 공개
 /CLAUDE.md
@@ -21,8 +25,10 @@
 **/*.jks
 **/*.keystore
 
-# 본문 암호화 AES 키 (★절대 공개 금지 — secret_key.example.dart 템플릿만 공개)
+# 본문 암호화 AES 키 — 실제(전체 본문) 키는 절대 공개 금지(secret_key.example.dart 템플릿만)
 **/secret_key.dart
+# ── 단, 공개 데모용 '샘플 키'(창세기 샘플 .enc만 푸는 키, 비밀 아님)는 포함 ──
+!bible_reader_app/lib/data/repositories/secret_key.dart
 
 # Flutter/Dart 빌드 산출물
 **/build/

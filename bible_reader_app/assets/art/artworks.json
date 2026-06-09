@@ -1,0 +1,119 @@
+{
+  "_meta": {
+    "description": "편(chapter)별 명화 메타데이터. 본문(books.json)과 분리된 공개 가능 데이터. 키: 책 id → 편 번호(string).",
+    "source": "Wikimedia Commons",
+    "license_policy": "Public domain (PD-Art) 태그 붙은 2D 회화 복제본만 사용. CC/기타 라이선스 파일은 제외.",
+    "image_spec": "긴 변 1280px JPEG, art/{CODE}.jpg",
+    "credit_required": "각 작품 표시 시 작가·작품명·소장처 캡션 노출"
+  },
+  "genesis": {
+    "1": {
+      "artist": "미켈란젤로",
+      "title": "아담의 창조",
+      "year": "c.1511",
+      "file": "art/GEN-1.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Michelangelo - Creation of Adam (cropped).jpg"
+    },
+    "2": {
+      "artist": "미켈란젤로",
+      "title": "타락과 낙원 추방",
+      "year": "1509–1510",
+      "file": "art/GEN-2.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Michelangelo, Fall and Expulsion from Garden of Eden 00.jpg"
+    },
+    "3": {
+      "artist": "티치아노",
+      "title": "카인과 아벨",
+      "year": "1542–1544",
+      "file": "art/GEN-3.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Titian - Cain and Abel - WGA22778.jpg"
+    },
+    "4": {
+      "artist": "미켈란젤로",
+      "title": "대홍수",
+      "year": "c.1509",
+      "file": "art/GEN-4.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "El Diluvio.jpg"
+    },
+    "5": {
+      "artist": "대 피터르 브뤼헐",
+      "title": "바벨탑",
+      "year": "1563",
+      "file": "art/GEN-5.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Pieter Bruegel the Elder - The Tower of Babel (Vienna) - Google Art Project - edited.jpg"
+    },
+    "6": {
+      "artist": "피터르 라스트만",
+      "title": "아브라함의 가나안 여정",
+      "year": "1614",
+      "file": "art/GEN-6.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Lastman, Pieter - Abraham's Journey to Canaan - 1614.jpg"
+    },
+    "7": {
+      "artist": "야코프 요르단스 (루벤스 원작)",
+      "title": "소돔을 탈출하는 롯과 가족",
+      "year": "c.1618–1620",
+      "file": "art/GEN-7.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Jacob Jordaens - The Flight of Lot and His Family from Sodom (after Rubens) - Google Art Project.jpg"
+    },
+    "8": {
+      "artist": "렘브란트",
+      "title": "이삭의 희생",
+      "year": "1635",
+      "file": "art/GEN-8.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Rembrandt Harmensz. van Rijn 035.jpg"
+    },
+    "9": {
+      "artist": "호베르트 플린크",
+      "title": "이삭이 야곱을 축복함",
+      "year": "1638",
+      "file": "art/GEN-9.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Isaak zegent Jakob Rijksmuseum SK-A-110.jpeg"
+    },
+    "10": {
+      "artist": "후세페 데 리베라",
+      "title": "야곱의 꿈",
+      "year": "1639",
+      "file": "art/GEN-10.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "José de Ribera - Jacob's Dream - WGA19383.jpg"
+    },
+    "11": {
+      "artist": "콘스탄틴 플라비츠키",
+      "title": "요셉이 형들에게 팔림",
+      "year": "1855",
+      "file": "art/GEN-11.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Konstantin Flavitsky 001.jpg"
+    },
+    "12": {
+      "artist": "페터 폰 코르넬리우스",
+      "title": "요셉이 형제들에게 자신을 드러냄",
+      "year": "1816–1817",
+      "file": "art/GEN-12.jpg",
+      "license": "Public domain",
+      "source": "Wikimedia Commons",
+      "commons": "Peter von Cornelius - Joseph gibt sich seinen Brüdern zu erkennen - Google Art Project.jpg"
+    }
+  }
+}

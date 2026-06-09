@@ -77,7 +77,7 @@ Future<void> main() async {
       size: Size(1080, 820),
       minimumSize: Size(600, 520),
       center: true,
-      title: '성경 전체 썰 읽으실분',
+      title: '성경전체썰읽으실분',
       titleBarStyle: TitleBarStyle.normal,
     );
     await windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -105,7 +105,7 @@ class BibleReaderApp extends ConsumerWidget {
     // 밝기 = 인앱 딜밍. 전 화면(다이얼로그 포함) 위에 검정 오버레이를 덮어 어둡게.
     final dim = ((1.0 - brightness) * dimMax).clamp(0.0, dimMax);
     return MaterialApp(
-      title: '성경 전체 썰 읽으실분',
+      title: '성경전체썰읽으실분',
       debugShowCheckedModeBanner: false,
       navigatorKey: MouseNav.navigatorKey,
       theme: buildToneTheme(

@@ -1,8 +1,14 @@
-# 성경 전체 썰 읽으실분
+# 성경전체썰읽으실분
 
 > 성경 76권을 **친구가 반말로 풀어주는 "썰"** 톤으로 읽는 가벼운 ebook.
 
 잉크·세피아 톤의 차분한 리더 앱입니다. **Android와 Windows 데스크탑**에서, 본문 글꼴과 읽기 테마 톤을 취향대로 골라 읽을 수 있습니다.
+
+<p>
+  <a href="https://apps.microsoft.com/detail/9pfjk276k4wc?mode=direct">
+    <img src="https://get.microsoft.com/images/ko%20dark.svg" width="220" alt="Microsoft Store에서 다운로드" />
+  </a>
+</p>
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart-3.12-0175C2?logo=dart&logoColor=white)
@@ -26,8 +32,10 @@
 
 ## 다운로드
 
-- **Windows 데스크탑** — [Releases](https://github.com/jungwonil11-jpg/bible-sseol/releases)에서 최신 `.zip`을 받아 압축을 풀고 폴더 안의 실행 파일을 실행하세요. 설치 과정 없이 바로 실행됩니다.
+- **Windows** — [Microsoft Store에서 설치](https://apps.microsoft.com/detail/9pfjk276k4wc)하세요. 코드 서명·자동 업데이트가 적용되어 SmartScreen 경고 없이 설치됩니다.
 - **Android** — 비공개 테스트 진행 중입니다.
+
+> 예전 GitHub Releases의 무서명 `.zip` 배포는 종료했습니다. Windows 배포는 Microsoft Store로 일원화되었습니다.
 
 ---
 
@@ -73,28 +81,35 @@ convert_to_json.py         books.js → 앱용 books.json 변환
 canon_meta.py              정경(개신교/천주교/정교회) 메타 단일 소스
 ```
 
-> **본문 텍스트(`books.js` · `books_src/` · `books.json`)는 저작 콘텐츠로, 이 저장소에 포함하지 않습니다.**
-> 공개되는 것은 앱 코드와 빌드 파이프라인입니다.
+> **전체 본문(`books.js` · `books_src/` · 전체 `books.json`)은 저작 콘텐츠로 이 저장소에 포함하지 않습니다.**
+> 공개되는 것은 앱 코드, 빌드 파이프라인, 그리고 바로 실행해 볼 수 있는 **창세기 샘플**입니다.
 
 ---
 
-## 빌드
+## 직접 빌드 · 실행
 
-본문 데이터(`assets/books.json`)는 저장소에 포함되지 않으므로, 앱을 직접 빌드해 실행하려면 별도의 데이터가 필요합니다. 코드 빌드 절차는 다음과 같습니다.
+전체 본문(76권)은 저작 콘텐츠라 포함하지 않지만, **창세기 1권과 편별 명화를 샘플로 포함**해 두어 클론하면 그대로 빌드·실행됩니다.
 
 ```bash
-# 1) (데이터 보유 시) 본문 원본 → 앱용 JSON 생성
-python merge_books.py
-python convert_to_json.py
-
-# 2) Flutter 앱 빌드
 cd bible_reader_app
 flutter pub get
-flutter build appbundle           # Android 릴리스용 .aab
-flutter build windows --release   # Windows 데스크탑 (Release 폴더 생성)
-# 또는
-flutter run -d windows            # 로컬 실행
+flutter run -d windows        # Windows 데스크탑
+# flutter run -d <기기id>     # Android
 ```
+
+샘플은 창세기만 표시됩니다. 전체 76권은 [Microsoft Store](https://apps.microsoft.com/detail/9pfjk276k4wc) 정식 버전에서 읽을 수 있습니다.
+
+<details>
+<summary>본문 데이터 파이프라인 (원본 보유자용)</summary>
+
+본문 원본(`books_src/`)을 가진 경우의 데이터 빌드 절차입니다. 앱은 평문이 아니라 **AES-256 암호화본(`books.json.enc`)** 만 읽습니다.
+
+```bash
+python merge_books.py        # books_src/*.js → books.js
+python convert_to_json.py    # books.js → assets/books.json
+cd bible_reader_app && dart run tool/encrypt_books.dart   # → assets/books.json.enc
+```
+</details>
 
 ---
 
@@ -111,4 +126,4 @@ flutter run -d windows            # 로컬 실행
 - **앱 코드** — [MIT License](LICENSE).
 - **폰트** — Gamja Flower, 나눔명조/고딕/스퀘어, 마루 부리 모두 SIL Open Font License 1.1(OFL). 상업적 사용·임베드·재배포 허용(폰트 자체의 유료 판매만 금지). 고지 원문은 `bible_reader_app/assets/licenses/` 참고.
 - **수록 명화** — Wikimedia Commons의 퍼블릭 도메인(PD-Art) 회화입니다. 앱 내 정보 화면에서 작가·작품·소장처를 고지합니다.
-- **본문 콘텐츠** — 저작권 보유. 저장소에 포함하지 않으며 MIT 적용 대상이 아닙니다.
+- **본문 콘텐츠** — 저작권 보유. 전체 본문은 저장소에 포함하지 않으며 MIT 적용 대상이 아닙니다. 저장소에 포함된 창세기 샘플 본문도 코드(MIT)와 별개로 본문 저작권이 유지됩니다.
